@@ -18,6 +18,7 @@ TWITTER_USERNAME = "binancezh"
 def get_latest_tweet(client, username):
     user = client.get_user(username=username).data
     tweets = client.get_users_tweets(id=user.id, max_results=5)
+    print("x 用户id:", user.id)
     return tweets.data[0].text if tweets.data else None
 
 def send_to_wechat(text):
