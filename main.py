@@ -1,46 +1,49 @@
-import snscrape.modules.twitter as sntwitter
 import requests
+import time
 import os
-import json
+import tweepy
 
-USERNAME = "binancezh"
-SENDKEY = os.environ.get("SENDKEY", "")
-STATE_FILE = "last_tweet.json"
+# Twitter API 凭证
+CLIENT_ID = os.getenv("TWITTER_CLIENT_ID")
+CLIENT_SECRET = os.getenv("TWITTER_CLIENT_SECRET")
+BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 
-def get_latest_tweet():
-    for tweet in sntwitter.TwitterUserScraper(USERNAME).get_items():
-        return {"id": tweet.id, "content": tweet.content}
+# Server酱配置
+SCKEY = os.getenv("SERVER_CHAN_KEY")
+SERVERCHAN_URL = f"https://sct.ftqq.com/{SCKEY}.send"
 
-def load_last_tweet_id():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r") as f:
-            return json.load(f).get("id")
-    return None
+# 要监控的用户
+TWITTER_USERNAME = "binancezh"
 
-def save_latest_tweet(tweet):
-    with open(STATE_FILE, "w") as f:
-        json.dump(tweet, f)
+def get_latest_tweet(client, username):
+    user = client.get_user(username=username).data
+    tweets = client.get_users_tweets(id=user.id, max_results=5)
+    return tweets.data[0].text if tweets.data else None
 
-def send_serverchan(content):
-    if not SENDKEY:
-        print("No Server酱 SendKey set")
-        return
-    url = f"https://sctapi.ftqq.com/{SENDKEY}.send"
-    data = {
-        "title": "📢 @binancezh 有新推文",
-        "desp": content
-    }
-    requests.post(url, data=data)
+def send_to_wechat(text):
+    requests.post(SERVERCHAN_URL, data={
+        "title": "Twitter新动态",
+        "desp": text
+    })
 
 def main():
-    latest_tweet = get_latest_tweet()
-    last_id = load_last_tweet_id()
-    if str(latest_tweet["id"]) != str(last_id):
-        print("New tweet detected")
-        send_serverchan(latest_tweet['content'])
-        save_latest_tweet(latest_tweet)
+    client = tweepy.Client(bearer_token=BEARER_TOKEN)
+    latest = get_latest_tweet(client, TWITTER_USERNAME)
+    cache_file = "latest.txt"
+    
+    if os.path.exists(cache_file):
+        with open(cache_file, "r") as f:
+            last = f.read().strip()
     else:
-        print("No new tweet")
+        last = ""
+
+    if latest and latest != last:
+        send_to_wechat(latest)
+        with open(cache_file, "w") as f:
+            f.write(latest)
+        print("新推文已发送")
+    else:
+        print("无新推文")
 
 if __name__ == "__main__":
     main()
