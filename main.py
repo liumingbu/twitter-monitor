@@ -10,7 +10,7 @@ BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 
 # Server酱配置
 SCKEY = os.getenv("SERVER_CHAN_KEY")
-SERVERCHAN_URL = f"https://sct.ftqq.com/{SCKEY}.send"
+SERVERCHAN_URL = f"https://sctapi.ftqq.com/{SCKEY}.send"
 
 # 要监控的用户
 TWITTER_USERNAME = "binancezh"
