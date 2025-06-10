@@ -1,0 +1,27 @@
+name: Twitter Monitor
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"  # 每10分钟执行一次
+  workflow_dispatch:       # 允许手动触发
+
+jobs:
+  check-tweets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          pip install snscrape requests
+
+      - name: Run monitor script
+        env:
+          SENDKEY: ${{ secrets.SENDKEY }}
+        run: python main.py
